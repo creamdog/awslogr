@@ -1,0 +1,7 @@
+{
+	"accessKey" : "g0fd87gd98g7fdg987",
+	"secretKey" : "KJjhfdu6d9asd7a8d76adas76d8sa8",
+	"region" : "us-east-1",
+	"endpoint" : "https://logs.us-east-1.amazonaws.com",
+	"logGroupName" : "nodejs-cluster"
+}
