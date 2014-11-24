@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"github.com/creamdog/goamz/logs"
@@ -8,9 +9,8 @@ import (
 	"github.com/fatih/color"
 	"regexp"
 	"strings"
-	"time"
 	"text/template"
-	"bytes"
+	"time"
 )
 
 func main() {
@@ -29,17 +29,17 @@ func main() {
 		LogGroupName:  flag.String("groupName", "", "name of log group"),
 		LogStreamName: flag.String("streamName", "", "name of log stream"),
 		Forward:       flag.Bool("stream", false, "stream new events, indefinetly"),
-		Match:         flag.String("match", ".+", "match against <regexp>"),
+		Match:         flag.String("match", "(?is).+", "match against <regexp>"),
 		Flatten:       flag.Bool("flatten", false, "replace newlines with spaces before capture"),
-		Capture:       flag.String("capture", ".+", "capture using <regexp>"),
+		Capture:       flag.String("capture", "(?is).+", "capture using <regexp>"),
 		ListGroups:    flag.Bool("listGroups", false, "list log groups"),
 		ListStreams:   flag.Bool("listStreams", false, "list log group streams"),
-		FromDate:      flag.String("fromDate", time.Now().Add(-2 * time.Hour).Format(dateFormat), "from date"),
+		FromDate:      flag.String("fromDate", time.Now().Add(-2*time.Hour).Format(dateFormat), "from date"),
 		ToDate:        flag.String("toDate", time.Now().Format(dateFormat), "to date"),
 		Colorize:      flag.Bool("colorize", false, "colorize"),
-		Format:  	   flag.String("format", "[{{.Timestamp}}] {{.Message}}{{.Newline}}", "output format"),
+		Format:        flag.String("format", "[{{.Timestamp}}] {{.Message}}{{.Newline}}", "output format"),
 		Timestamp:     flag.String("timestamp", dateFormat, "timestamp format"),
-		Config: 	   flag.String("config", configFile, "config file to load"),
+		Config:        flag.String("config", configFile, "config file to load"),
 	}
 	flag.Parse()
 
@@ -88,7 +88,7 @@ func main() {
 	workers := make(chan int, len(streams))
 	for _, stream := range streams {
 
-		go listen(client, flags, EventStats{0,0}, *flags.LogGroupName, stream.LogStreamName, true, "", func(events []*logs.Event) {
+		go listen(client, flags, EventStats{0, 0}, *flags.LogGroupName, stream.LogStreamName, true, "", func(events []*logs.Event) {
 
 			defer color.Unset()
 
@@ -116,13 +116,13 @@ func main() {
 					time = red(time)
 					text = config.ApplyColorize(text)
 				}
-				var doc bytes.Buffer 
+				var doc bytes.Buffer
 				flags.FormatTemplate.Execute(&doc, struct {
 					Timestamp string
-					Message string
-					Newline string
+					Message   string
+					Newline   string
 				}{
-					time, 
+					time,
 					text,
 					"\n",
 				})
