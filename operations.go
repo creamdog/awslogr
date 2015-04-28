@@ -1,10 +1,10 @@
 package main
 
-import(	
+import (
 	"fmt"
 	"github.com/creamdog/goamz/logs"
-	"time"
 	"strings"
+	"time"
 )
 
 func listGroups(client *logs.CloudWatchLogs, config *Config) {
@@ -16,10 +16,10 @@ func listGroups(client *logs.CloudWatchLogs, config *Config) {
 
 	table := NewTable()
 	table.AddRow("NAME", "CREATED", "STORED BYTES", "RETENTION IN DAYS")
-	
+
 	for _, group := range groups {
-		table.AddRow(group.LogGroupName, 
-			time.Unix(group.CreationTime/1000, 0).Format(*config.Timestamp), 
+		table.AddRow(group.LogGroupName,
+			time.Unix(group.CreationTime/1000, 0).Format(*config.Timestamp),
 			fmt.Sprintf("%d", group.StoredBytes),
 			fmt.Sprintf("%d", group.RetentionInDays))
 	}
@@ -39,11 +39,11 @@ func listStreams(client *logs.CloudWatchLogs, groupName string, config *Config) 
 	}
 	table := NewTable()
 	table.AddRow("NAME", "CREATED", "LAST EVENT TIMESTAMP", "STORED BYTES", "SEQUENCE TOKEN")
-	
+
 	for _, stream := range streams {
-		table.AddRow(stream.LogStreamName, 
-			time.Unix(stream.CreationTime/1000, 0).Format(*config.Timestamp), 
-			time.Unix(stream.LastEventTimestamp/1000, 0).Format(*config.Timestamp), 
+		table.AddRow(stream.LogStreamName,
+			time.Unix(stream.CreationTime/1000, 0).Format(*config.Timestamp),
+			time.Unix(stream.LastEventTimestamp/1000, 0).Format(*config.Timestamp),
 			fmt.Sprintf("%d", stream.StoredBytes),
 			stream.UploadSequenceToken)
 	}
@@ -60,13 +60,11 @@ type EventStats struct {
 
 func listen(client *logs.CloudWatchLogs, config *Config, stats EventStats, groupName string, streamName string, initialDryRun bool, nextToken string, callback func([]*logs.Event), done func()) {
 
-
 	request := logs.GetLogEventsRequest{
 		LogGroupName:  groupName,
 		LogStreamName: streamName,
 		NextToken:     nextToken,
 	}
-
 
 	if !*config.Forward {
 
@@ -89,12 +87,11 @@ func listen(client *logs.CloudWatchLogs, config *Config, stats EventStats, group
 		request.StartFromHead = true
 	}
 
-	
 	eventsReponse, err := client.GetLogEvents(&request)
 	if err != nil {
 		if strings.Index(err.Error(), "ThrottlingException") > 0 {
-			fmt.Printf("%v\nSLEEPING 15 sec", err)
-			time.Sleep(15 * time.Second)
+			//fmt.Printf("%v\nSLEEPING 15 sec", err)
+			time.Sleep(10 * time.Second)
 		} else {
 			fmt.Printf("%v\n", err)
 			done()
@@ -103,7 +100,7 @@ func listen(client *logs.CloudWatchLogs, config *Config, stats EventStats, group
 	} else if *config.Forward {
 		if !initialDryRun {
 			callback(eventsReponse.Events)
-		}			
+		}
 		if eventsReponse.NextForwardToken == nextToken {
 			time.Sleep(4 * time.Second)
 		} else {
@@ -124,11 +121,11 @@ func listen(client *logs.CloudWatchLogs, config *Config, stats EventStats, group
 				stats = EventStats{event.Timestamp, event.Timestamp}
 			}
 
-			if(stats.MaxTimestamp < event.Timestamp) {
+			if stats.MaxTimestamp < event.Timestamp {
 				stats.MaxTimestamp = event.Timestamp
 			}
 
-			if(stats.MinTimestamp > event.Timestamp) {
+			if stats.MinTimestamp > event.Timestamp {
 				stats.MinTimestamp = event.Timestamp
 			}
 		}
@@ -143,8 +140,6 @@ func listen(client *logs.CloudWatchLogs, config *Config, stats EventStats, group
 		}
 		nextToken = eventsReponse.NextForwardToken
 	}
-
-	
 
 	listen(client, config, stats, groupName, streamName, false, nextToken, callback, done)
 }

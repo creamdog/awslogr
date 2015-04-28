@@ -85,6 +85,9 @@ func main() {
 		fmt.Printf("%v\n", err)
 		return
 	}
+
+	fmt.Printf("streams: %d ==> %q\n", len(streams), streams)
+
 	workers := make(chan int, len(streams))
 	for _, stream := range streams {
 
